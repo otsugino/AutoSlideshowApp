@@ -13,10 +13,13 @@ import android.content.ContentUris
 import android.provider.Contacts
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
+import android.widget.Toast
 
 class MainActivity : AppCompatActivity() {
 
     private val PERMISSIONS_REQUEST_CODE = 100
+    // パーミッションが許可されていれば１、そうでなければ0
+    private var permission_allow:Int = 0
 
 
     private var photo_no:Int = 0
@@ -25,8 +28,6 @@ class MainActivity : AppCompatActivity() {
 
     private var mTimer: Timer? = null
 
-    // タイマー用の時間のための変数
-    private var mTimerSec = 0.0
 
     private var mHandler = Handler()
 
@@ -38,19 +39,11 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
 
+        permissionCheck()
 
-        // Android 6.0以降の場合
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            // パーミッションの許可状態を確認する
-            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-                // 許可されている
-                getContentsInfo1()
-            } else {
-                // 許可されていないので許可ダイアログを表示する
-                requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), PERMISSIONS_REQUEST_CODE)
-            }
-            // Android 5系以下の場合
-        } else {
+
+
+        if(permission_allow == 1){
             getContentsInfo1()
         }
 
@@ -58,28 +51,33 @@ class MainActivity : AppCompatActivity() {
             Log.d("ANDROID","push_playstop")
             Log.d("ANDROID",photo_no.toString())
 
-            if(playstop_button.text == "再生"){
-                playstop_button.text = "停止"
-                forward_button.setEnabled(false)
-                back_button.setEnabled(false)
+            if(permission_allow == 1) {
+                if(playstop_button.text == "再生"){
+                    playstop_button.text = "停止"
+                    forward_button.setEnabled(false)
+                    back_button.setEnabled(false)
 
-                mTimer = Timer()
-                mTimer!!.schedule(object : TimerTask() {
-                    override fun run() {
+                    mTimer = Timer()
+                    mTimer!!.schedule(object : TimerTask() {
+                        override fun run() {
 
-                        mHandler.post {
-                            countup_photo_no()
+                            mHandler.post {
+                                countup_photo_no()
+                            }
                         }
-                    }
-                }, 2000, 2000)
+                    }, 2000, 2000)
+                }else{
+                    playstop_button.text = "再生"
+                    forward_button.setEnabled(true)
+                    back_button.setEnabled(true)
+
+                    mTimer!!.cancel()
+                }
             }else{
-                playstop_button.text = "再生"
-                forward_button.setEnabled(true)
-                back_button.setEnabled(true)
-
-                mTimer!!.cancel()
-
+                Toast.makeText(this,"権限が許可されていません。",Toast.LENGTH_SHORT).show()
             }
+
+
 
 
 
@@ -90,23 +88,54 @@ class MainActivity : AppCompatActivity() {
 
         forward_button.setOnClickListener {
             Log.d("ANDROID","push_forward")
-            countup_photo_no()
+            if(permission_allow == 1) {
+                countup_photo_no()
 
-
+            }else{
+                Toast.makeText(this,"権限が許可されていません。",Toast.LENGTH_SHORT).show()
+            }
         }
 
         back_button.setOnClickListener {
             Log.d("ANDROID","push_back")
-            countdown_photo_no()
-
+            if(permission_allow == 1) {
+                countdown_photo_no()
+            }else{
+                Toast.makeText(this,"権限が許可されていません。",Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
+    private fun permissionCheck(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            // Android 6.0以降の場合
+            // パーミッションの許可状態を確認する
+            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                // 許可されている
+                Log.d("ANDROID", "許可されている")
+                permission_allow = 1
+
+            } else {
+                // 許可されていないので許可ダイアログを表示する
+                Log.d("ANDROID", "許可されていない")
+                requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), PERMISSIONS_REQUEST_CODE)
+            }
+            // Android 5系以下の場合
+        } else {
+            permission_allow = 1
+        }
+
+    }
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         when (requestCode) {
             PERMISSIONS_REQUEST_CODE ->
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    getContentsInfo1()
+                    Log.d("ANDROID", "許可された")
+                    permission_allow = 1
+
+                }else{
+                    Log.d("ANDROID", "許可されなかった")
+                    permission_allow = 0
                 }
         }
     }
