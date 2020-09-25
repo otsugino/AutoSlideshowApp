@@ -38,14 +38,12 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-
+        Log.d("ANDROID","パーミッションチェック前"+permission_allow)
         permissionCheck()
 
 
 
-        if(permission_allow == 1){
-            getContentsInfo1()
-        }
+
 
         playstop_button.setOnClickListener {
             Log.d("ANDROID","push_playstop")
@@ -112,35 +110,42 @@ class MainActivity : AppCompatActivity() {
             // パーミッションの許可状態を確認する
             if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
                 // 許可されている
-                Log.d("ANDROID", "許可されている")
                 permission_allow = 1
+                Log.d("ANDROID","許可されている。パーミッションチェック後"+permission_allow)
+                getContentsInfo1()
 
             } else {
                 // 許可されていないので許可ダイアログを表示する
-                Log.d("ANDROID", "許可されていない")
+                Log.d("ANDROID", "許可されていない"+permission_allow)
                 requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), PERMISSIONS_REQUEST_CODE)
             }
             // Android 5系以下の場合
         } else {
             permission_allow = 1
+            Log.d("ANDROID","Android5以下。パーミッションチェック後"+permission_allow)
+            getContentsInfo1()
         }
+
+
 
     }
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         when (requestCode) {
             PERMISSIONS_REQUEST_CODE ->
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.d("ANDROID", "許可された")
                     permission_allow = 1
+                    Log.d("ANDROID","許可された。パーミッションチェック後"+permission_allow)
+                    getContentsInfo1()
 
                 }else{
-                    Log.d("ANDROID", "許可されなかった")
-                    permission_allow = 0
+                    Log.d("ANDROID","許可されなかった。パーミッションチェック後"+permission_allow)
+
                 }
         }
     }
 
     private fun getContentsInfo1() {
+        Log.d("ANDROID","実行：getContentInfo1")
         // 画像の情報を取得する
         val resolver = contentResolver
         val cursor = resolver.query(
